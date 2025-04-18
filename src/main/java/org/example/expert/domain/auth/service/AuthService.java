@@ -24,17 +24,18 @@ public class AuthService {
     private final JwtUtil jwtUtil;
 
     @Transactional
-    public SignupResponse signup(SignupRequest signupRequest) {
+    public SignupResponse signup(SignupRequest signupRequest) { //SignupRequest -> email, pw, userRole
 
-        String encodedPassword = passwordEncoder.encode(signupRequest.getPassword());
-
-        UserRole userRole = UserRole.of(signupRequest.getUserRole());
-
-        if (userRepository.existsByEmail(signupRequest.getEmail())) {
+        // 1-1. encode는 무거운 연산, 필요하지 않은데 동작하면 낭비가 될 수 있음 -> 비교적 간단하고 가벼운 이메일 중복체크 로직을 앞으로 뺐다.
+        if (userRepository.existsByEmail(signupRequest.getEmail())) { //이메일 중복체크
             throw new InvalidRequestException("이미 존재하는 이메일입니다.");
         }
 
-        User newUser = new User(
+        String encodedPassword = passwordEncoder.encode(signupRequest.getPassword()); //비밀번호 암호화
+
+        UserRole userRole = UserRole.of(signupRequest.getUserRole()); //회원 권한 검증 -> 이것도 가벼운 연산이라 비밀번호 암호화보다 먼저 와도 될 것같다고 생각!
+
+        User newUser = new User( //유저 생성
                 signupRequest.getEmail(),
                 encodedPassword,
                 userRole
